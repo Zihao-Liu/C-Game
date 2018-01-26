@@ -1,0 +1,5 @@
+﻿  Tetris.cpp
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(551): warning C4715: “Tpoly::MoveLeft”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(601): warning C4715: “Tpoly::MoveRight”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(501): warning C4715: “Tpoly::Fall”: 不是所有的控件路径都返回值
+  Tetris.vcxproj -> C:\Liuzihao\Github\C-Game\Tetris\Debug\Tetris.exe
