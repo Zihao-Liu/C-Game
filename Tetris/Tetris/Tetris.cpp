@@ -71,9 +71,11 @@ public:
 			pos.X = LEFT_MARGIN;
 			SetConsoleCursorPosition(hout, pos);
 			for (int i = 0; i < height; i++) {
+				pos.Y = i + TOP_MARGIN;
+				pos.X = LEFT_MARGIN;
+				SetConsoleCursorPosition(hout, pos);
 				for (int j = 0; j < width; j++)
-					cout << B[i][j]<<' ';
-				cout << endl;
+					cout << B[i][j] << ' ';
 			}
 		}
 	}
@@ -336,9 +338,9 @@ public:
 				return false;
 		}
 		else {
-			if (G.GetBoard()[y + 1][x + 3] == ' ') {
-				G.SetBoard(y + 1, x - 1, ' ');
-				G.SetBoard(y + 1, x + 3, '#');
+			if (G.GetBoard()[y + 1][x + 4] == ' ') {
+				G.SetBoard(y + 1, x, ' ');
+				G.SetBoard(y + 1, x + 4, '#');
 				x++;
 				return true;
 			}
@@ -1469,22 +1471,29 @@ int main() {
 		if (A->Init(G, y, x) == false)
 			break;
 		G.Show();
-		while (A->Fall(G, y, x) == true) {
-
-			G.Show(y, x);
-			srand((unsigned)time(0));
-			int a = rand() % 10;
-			if (a < 2)
-				A->MoveLeft(G, y, x);
-			else if (a < 5)
-				A->MoveRight(G, y, x);
-			else if (a < 9)
-				A->Rotate(G, y, x);
-			else {
-				A->Fall(G, y, x);
+		while (1) {
+			int count = 10;
+			int up = 0, left = 0, right = 0;
+			while (count--) {
+				if (GetKeyState(VK_UP) < 0) {
+					A->Rotate(G, y, x);
+					break;
+				}
+				if (GetKeyState(VK_LEFT) < 0) {
+					A->MoveLeft(G, y, x);
+					break;
+				}
+				if (GetKeyState(VK_RIGHT) < 0) {
+					A->MoveRight(G, y, x);
+					break;
+				}
+				Sleep(10);
+			}
+			Sleep(100);
+			if (A->Fall(G, y, x) == false) {
+				break;
 			}
 			G.Show(y, x);
-			Sleep(100);
 		}
 		G.Eliminate(y, x);
 		delete(A);

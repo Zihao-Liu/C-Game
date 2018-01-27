@@ -1,11 +1,11 @@
 ﻿  Tetris.cpp
-c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(503): warning C4715: “Tpoly::Fall”: 不是所有的控件路径都返回值
-c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(553): warning C4715: “Tpoly::MoveLeft”: 不是所有的控件路径都返回值
-c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(603): warning C4715: “Tpoly::MoveRight”: 不是所有的控件路径都返回值
-c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(821): warning C4715: “LeftL::MoveLeft”: 不是所有的控件路径都返回值
-c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(770): warning C4715: “LeftL::Fall”: 不是所有的控件路径都返回值
-c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(871): warning C4715: “LeftL::MoveRight”: 不是所有的控件路径都返回值
-c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(1038): warning C4715: “RightL::Fall”: 不是所有的控件路径都返回值
-c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(1140): warning C4715: “RightL::MoveRight”: 不是所有的控件路径都返回值
-c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(1089): warning C4715: “RightL::MoveLeft”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(505): warning C4715: “Tpoly::Fall”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(605): warning C4715: “Tpoly::MoveRight”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(555): warning C4715: “Tpoly::MoveLeft”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(772): warning C4715: “LeftL::Fall”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(823): warning C4715: “LeftL::MoveLeft”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(873): warning C4715: “LeftL::MoveRight”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(1040): warning C4715: “RightL::Fall”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(1091): warning C4715: “RightL::MoveLeft”: 不是所有的控件路径都返回值
+c:\liuzihao\github\c-game\tetris\tetris\tetris.cpp(1142): warning C4715: “RightL::MoveRight”: 不是所有的控件路径都返回值
   Tetris.vcxproj -> C:\Liuzihao\Github\C-Game\Tetris\Debug\Tetris.exe
