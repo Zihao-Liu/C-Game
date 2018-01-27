@@ -4,8 +4,11 @@
 #include <ctime>
 using namespace std;
 
-#define INIT_WIDTH 10
-#define INIT_HEIGHT 20
+#define INIT_WIDTH 20
+#define INIT_HEIGHT 30
+#define LEFT_MARGIN 65
+#define TOP_MARGIN 5
+#define MIDDLE 9
 
 class GameBoard {
 private:
@@ -19,6 +22,12 @@ public:
 		this->width = width + 2;
 		this->height = height + 2;
 		hout = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_CURSOR_INFO cursor_info = { 1,0 };
+		SetConsoleCursorInfo(hout, &cursor_info);
+		pos.X = LEFT_MARGIN + (this->width+10)/2;
+		pos.Y = TOP_MARGIN / 2;
+		SetConsoleCursorPosition(hout, pos);
+		cout << "俄 罗 斯 方 块";
 		vector<char> A(this->width, ' ');
 		for (int i = 0; i < this->height; i++) {
 			B.push_back(A);
@@ -58,22 +67,25 @@ public:
 			}
 		}
 		if (flag2) {
+			pos.Y = TOP_MARGIN;
+			pos.X = LEFT_MARGIN;
+			SetConsoleCursorPosition(hout, pos);
 			for (int i = 0; i < height; i++) {
 				for (int j = 0; j < width; j++)
-					cout << B[i][j];
+					cout << B[i][j]<<' ';
 				cout << endl;
 			}
 		}
 	}
 	void Show(int y = 1, int x = 0) {
 		//system("cls");
-		pos.X = 0;
 		pos.Y = y - 2 >= 0 ? y - 2 : 0;
-		SetConsoleCursorPosition(hout, pos);
 		for (int i = pos.Y; i < height; i++) {
+			pos.Y = i + TOP_MARGIN;
+			pos.X = LEFT_MARGIN;
+			SetConsoleCursorPosition(hout, pos);
 			for (int j = 0; j < width; j++)
-				cout << B[i][j];
-			cout << endl;
+				cout << B[i][j]<<' ';
 		}
 
 	}
@@ -92,7 +104,6 @@ public:
 	}
 };
 
-
 class Block {
 private:
 	int shape;
@@ -100,15 +111,16 @@ public:
 	Block() {
 		shape = 0;
 	}
+
+	//virtual void FastFall() = 0;
 	virtual bool Rotate(GameBoard& G, int y, int x) { return true; };
 	virtual bool Fall(GameBoard& G, int& y, int& x) { return true; };
-	//virtual void FastFall() = 0;
 	virtual bool Init(GameBoard& G, int& y, int& x) { return true; };
 	virtual bool MoveLeft(GameBoard& G, int& y, int& x) { return true; };
 	virtual bool MoveRight(GameBoard& G, int& y, int& x) { return true; };
 };
 
-/*正方形方块，只有一种形式
+/* 正方形方块，只有一种形式
 	* * * *
 	* # # *
 	* # # *
@@ -116,25 +128,24 @@ public:
 */
 class Square :public Block {
 public:
-	Square() {
+	Square() { }
 
+	bool Init(GameBoard& G, int& y, int& x) {
+		y = 0, x = MIDDLE;
+		if (G.GetBoard()[y + 1][x + 1] == ' ' && G.GetBoard()[y + 1][x + 2] == ' ' && G.GetBoard()[y + 2][x + 1] == ' ' && G.GetBoard()[y + 2][x + 2] == ' ') {
+
+			G.SetBoard(y + 1, x + 1,  '#');
+			G.SetBoard(y + 2, x + 1,  '#');
+			G.SetBoard(y + 1, x + 2, '#');
+			G.SetBoard(y + 2, x + 2,  '#');
+
+			return true;
+		}
+		return false;
 	}
 
 	bool Rotate(GameBoard& G, int y, int x) {
 		return true;
-	}
-
-	bool Init(GameBoard& G, int& y, int& x) {
-		y = 0, x = 4;
-		if (G.GetBoard()[1][5] == '#' || G.GetBoard()[1][6] == '#' || G.GetBoard()[2][5] == '#' || G.GetBoard()[2][6] == '#')
-			return false;
-		else {
-			G.SetBoard(2, 5, '#');
-			G.SetBoard(2, 6, '#');
-			G.SetBoard(1, 5, '#');
-			G.SetBoard(1, 6, '#');
-			return true;
-		}
 	}
 
 	bool Fall(GameBoard& G, int& y, int& x) {
@@ -146,8 +157,7 @@ public:
 			y++;
 			return true;
 		}
-		else
-			return false;
+		return false;
 	}
 
 	bool MoveLeft(GameBoard& G, int& y, int& x) {
@@ -159,8 +169,7 @@ public:
 			x--;
 			return true;
 		}
-		else
-			return false;
+		return false;
 	}
 
 	bool MoveRight(GameBoard& G, int& y, int& x) {
@@ -172,13 +181,12 @@ public:
 			x++;
 			return true;
 		}
-		else
-			return false;
+		return false;
 	}
 
 };
 
-/*直形方块，有两种形式
+/* 直形方块，有两种形式
 	1. * # * *	 2. * * * *
 	   * # * *		# # # #
 	   * # * *		* * * *
@@ -188,7 +196,36 @@ class Straight :public Block {
 private:
 	int shape;
 public:
-	Straight() {
+	Straight() { }
+
+	bool Init(GameBoard& G, int& y, int& x) {
+		srand((unsigned)time(0));
+		shape = rand() % 2;
+		if (shape == 0) {
+			y = 1;
+			x = MIDDLE;
+			if (G.GetBoard()[y][x + 1] == ' ' && G.GetBoard()[y + 1][x + 1] == ' ' && G.GetBoard()[y + 2][x + 1] == ' ' && G.GetBoard()[y + 3][x + 1] == ' ') {
+
+				G.SetBoard(y, x + 1, '#');
+				G.SetBoard(y+1, x + 1, '#');
+				G.SetBoard(y+2, x + 1, '#');
+				G.SetBoard(y+3, x + 1, '#');
+				return true;
+			}
+			return false;
+		}
+		else {
+			y = 0;
+			x = MIDDLE;
+			if (G.GetBoard()[y + 1][x] == ' ' && G.GetBoard()[y + 1][x + 1] == ' ' && G.GetBoard()[y + 1][x + 2] == ' ' && G.GetBoard()[y + 1][x + 3] == ' ') {
+				G.SetBoard(y + 1, x, '#');
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 1, x + 3, '#');
+				return true;
+			}
+			return false;
+		}
 
 	}
 
@@ -218,42 +255,11 @@ public:
 				G.SetBoard(y + 1, x + 3, ' ');
 				return true;
 			}
-			else
-				return false;
+			return false;
 		}
 	}
 
-	bool Init(GameBoard& G, int& y, int& x) {
-		srand((unsigned)time(0));
-		shape = rand() % 2;
-		if (shape == 0) {
-			y = 1;
-			x = 4;
-			if (G.GetBoard()[1][5] == '#' || G.GetBoard()[2][5] == '#' || G.GetBoard()[3][5] == '#' || G.GetBoard()[4][5] == '#')
-				return false;
-			else {
-				G.SetBoard(1, 5, '#');
-				G.SetBoard(2, 5, '#');
-				G.SetBoard(3, 5, '#');
-				G.SetBoard(4, 5, '#');
-				return true;
-			}
-		}
-		else {
-			y = 0;
-			x = 4;
-			if (G.GetBoard()[1][4] == '#' || G.GetBoard()[1][5] == '#' || G.GetBoard()[1][6] == '#' || G.GetBoard()[1][7] == '#')
-				return false;
-			else {
-				G.SetBoard(1, 4, '#');
-				G.SetBoard(1, 5, '#');
-				G.SetBoard(1, 6, '#');
-				G.SetBoard(1, 7, '#');
-				return true;
-			}
-		}
 
-	}
 
 	bool Fall(GameBoard& G, int& y, int& x) {
 		if (shape == 0) {
@@ -263,8 +269,7 @@ public:
 				y++;
 				return true;
 			}
-			else
-				return false;
+			return false;
 		}
 		else {
 			if (G.GetBoard()[y + 2][x] == ' '&&G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 2][x + 3] == ' ') {
@@ -279,8 +284,7 @@ public:
 				y++;
 				return true;
 			}
-			else
-				return false;
+			return false;
 		}
 
 	}
@@ -309,8 +313,7 @@ public:
 				x--;
 				return true;
 			}
-			else
-				return false;
+			return false;
 		}
 
 	}
@@ -339,8 +342,7 @@ public:
 				x++;
 				return true;
 			}
-			else
-				return false;
+			return false;
 		}
 	}
 
@@ -363,7 +365,7 @@ public:
 	bool Init(GameBoard& G, int& y, int& x) {
 		srand((unsigned)time(0));
 		shape = rand() % 4;
-		x = 4;
+		x = MIDDLE;
 		if (shape == 0) {
 			y = 0;
 			if (G.GetBoard()[y + 2][x] == ' '&&G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 1][x + 1] == ' ') {
@@ -499,7 +501,7 @@ public:
 			return false;
 		}
 	}
-	virtual bool MoveLeft(GameBoard& G, int& y, int& x) {
+	bool MoveLeft(GameBoard& G, int& y, int& x) {
 		if (shape == 0) {
 			if (G.GetBoard()[y + 2][x - 1] == ' '&&G.GetBoard()[y + 1][x] == ' ') {
 				G.SetBoard(y + 2, x - 1, '#');
@@ -549,7 +551,7 @@ public:
 			return false;
 		}
 	}
-	virtual bool MoveRight(GameBoard& G, int& y, int& x) {
+	bool MoveRight(GameBoard& G, int& y, int& x) {
 		if (shape == 0) {
 			if (G.GetBoard()[y + 2][x + 3] == ' '&&G.GetBoard()[y + 1][x + 2] == ' ') {
 				G.SetBoard(y + 2, x + 3, '#');
@@ -602,24 +604,864 @@ public:
 
 };
 
+/* 左偏L形方块，有四种形式
+	1. * * # *   2. * * * *   3. * * * *   4. * * * *
+	   * * # *		* # * *		 * # # *	  * # # #
+	   * # # *		* # # #		 * # * *	  * * * #
+	   * * * *		* * * *		 * # * *	  * * * *
+
+*/
+class LeftL :public Block {
+private:
+	int shape;
+public:
+	LeftL() {
+
+	}
+
+	bool Init(GameBoard& G, int& y, int& x) {
+		srand((unsigned)time(0));
+		shape = rand() % 4;
+		x = MIDDLE;
+		if (shape == 0) {
+			y = 1;
+			if (G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y][x + 2] == ' '&&G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 2][x + 2] == ' ') {
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y, x + 2, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 1) {
+			y = 0;
+			if (G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 2][x + 3] == ' ') {
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 2) {
+			y = 0;
+			if (G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 3][x + 1] == ' '&&G.GetBoard()[y + 1][x + 2] == ' ') {
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 3, x + 1, '#');
+				return true;
+			}
+			return false;
+		}
+		else {
+			y = 0;
+			if (G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 2][x + 3] == ' ') {
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool Rotate(GameBoard& G, int y, int x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 2][x + 3] == ' '&&G.GetBoard()[y + 1][x + 1] == ' ') {
+				shape = 1;
+				G.SetBoard(y + 2, x + 3, '#');
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y, x + 2, ' ');
+				G.SetBoard(y + 1, x + 2, ' ');
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 1) {
+			if (G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 3][x + 1] == ' ') {
+				shape = 2;
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 3, x + 1, '#');
+				G.SetBoard(y + 2, x + 2, ' ');
+				G.SetBoard(y + 2, x + 3, ' ');
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 2) {
+			if (G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 2][x + 3] == ' ') {
+				shape = 3;
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				G.SetBoard(y + 3, x + 1, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y][x + 2] == ' ') {
+				shape = 0;
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y, x + 2, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 1, x + 3, ' ');
+				G.SetBoard(y + 2, x + 3, ' ');
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool Fall(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 3][x + 1] == ' '&&G.GetBoard()[y + 3][x + 2] == ' ') {
+				G.SetBoard(y + 3, x + 1, '#');
+				G.SetBoard(y + 3, x + 2, '#');
+				G.SetBoard(y, x + 2, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				y++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 1) {
+			if (G.GetBoard()[y + 3][x + 1] == ' '&&G.GetBoard()[y + 3][x + 2] == ' '&&G.GetBoard()[y + 3][x + 3] == ' ') {
+				G.SetBoard(y + 3, x + 1, '#');
+				G.SetBoard(y + 3, x + 2, '#');
+				G.SetBoard(y + 3, x + 3, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				G.SetBoard(y + 2, x + 3, ' ');
+				y++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 2) {
+			if (G.GetBoard()[y + 4][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' ') {
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 4, x + 1, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 1, x + 2, ' ');
+				y++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 3) {
+			if (G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 3][x + 3] == ' ') {
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 3, x + 3, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 1, x + 3, ' ');
+				y++;
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool MoveLeft(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y][x + 1] == ' '&&G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 2][x] == ' ') {
+				G.SetBoard(y, x + 1, '#');
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 2, x, '#');
+				G.SetBoard(y, x + 2, ' ');
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				x--;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 1) {
+			if (G.GetBoard()[y + 1][x] == ' '&&G.GetBoard()[y + 2][x] == ' ') {
+				G.SetBoard(y + 1, x, '#');
+				G.SetBoard(y + 2, x, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 3, ' ');
+				x--;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 2) {
+			if (G.GetBoard()[y + 1][x] == ' '&&G.GetBoard()[y + 2][x] == ' '&&G.GetBoard()[y + 3][x] == ' ') {
+				G.SetBoard(y + 1, x, '#');
+				G.SetBoard(y + 2, x, '#');
+				G.SetBoard(y + 3, x, '#');
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				G.SetBoard(y + 3, x + 1, ' ');
+				x--;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 3) {
+			if (G.GetBoard()[y + 1][x] == ' '&&G.GetBoard()[y + 2][x + 2] == ' ') {
+				G.SetBoard(y + 1, x, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 1, x + 3, ' ');
+				G.SetBoard(y + 2, x + 3, ' ');
+				x--;
+				return true;
+			}
+			return false;
+		}
+	}
+	bool MoveRight(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y][x + 3] == ' '&&G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 2][x + 3] == ' ') {
+				G.SetBoard(y, x + 3, '#');
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				G.SetBoard(y, x + 2, ' ');
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				x++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 1) {
+			if (G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 2][x + 4] == ' ') {
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 2, x + 4, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				x++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 2) {
+			if (G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 3][x + 2] == ' ') {
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 3, x + 2, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				G.SetBoard(y + 3, x + 1, ' ');
+				x++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 3) {
+			if (G.GetBoard()[y + 1][x + 4] == ' '&&G.GetBoard()[y + 2][x + 4] == ' ') {
+				G.SetBoard(y + 1, x + 4, '#');
+				G.SetBoard(y + 2, x + 4, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 3, ' ');
+				x++;
+				return true;
+			}
+			return false;
+		}
+	}
+
+};
+
+/* 左偏L形方块，有四种形式
+	1. * # * *   2. * * * *   3. * * * *   4. * * * *
+	   * # * *		* # # #		 * # # *	  * * * #
+	   * # # *		* # * *		 * * # *	  * # # #
+	   * * * *		* * * *		 * * # *	  * * * *
+
+*/
+class RightL :public Block {
+private:
+	int shape;
+public:
+	RightL() {
+
+	}
+
+	bool Init(GameBoard& G, int& y, int& x) {
+		srand((unsigned)time(0));
+		shape = rand() % 4;
+		x = MIDDLE;
+		if (shape == 0) {
+			y = 1;
+			if (G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y][x + 1] == ' '&&G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 2][x + 1] == ' ') {
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y, x + 1, '#');
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 1) {
+			y = 0;
+			if (G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 2][x + 1] == ' ') {
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 2) {
+			y = 0;
+			if (G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 3][x + 2] == ' ') {
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 3, x + 2, '#');
+				return true;
+			}
+			return false;
+		}
+		else {
+			y = 0;
+			if (G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 2][x + 3] == ' ') {
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool Rotate(GameBoard& G, int y, int x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 1][x + 2] == ' ') {
+				shape = 1;
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y, x + 1, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 1) {
+			if (G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 3][x + 2] == ' ') {
+				shape = 2;
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 3, x + 2, '#');
+				G.SetBoard(y + 2, x + 1, ' ');
+				G.SetBoard(y + 1, x + 3, ' ');
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 2) {
+			if (G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 2][x + 3] == ' '&&G.GetBoard()[y + 2][x + 1] == ' ') {
+				shape = 3;
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 3, x + 2, ' ');
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y][x + 1] == ' '&&G.GetBoard()[y + 1][x + 1] == ' ') {
+				shape = 0;
+				G.SetBoard(y, x + 1, '#');
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 1, x + 3, ' ');
+				G.SetBoard(y + 2, x + 3, ' ');
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool Fall(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 3][x + 1] == ' '&&G.GetBoard()[y + 3][x + 2] == ' ') {
+				G.SetBoard(y + 3, x + 1, '#');
+				G.SetBoard(y + 3, x + 2, '#');
+				G.SetBoard(y, x + 1, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				y++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 1) {
+			if (G.GetBoard()[y + 3][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 2][x + 3] == ' ') {
+				G.SetBoard(y + 3, x + 1, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 1, x + 3, ' ');
+				y++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 2) {
+			if (G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 4][x + 2] == ' ') {
+				G.SetBoard(y + 4, x + 2, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 1, x + 2, ' ');
+				y++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 3) {
+			if (G.GetBoard()[y + 3][x + 1] == ' '&&G.GetBoard()[y + 3][x + 2] == ' '&&G.GetBoard()[y + 3][x + 3] == ' ') {
+				G.SetBoard(y + 3, x + 1, '#');
+				G.SetBoard(y + 3, x + 2, '#');
+				G.SetBoard(y + 3, x + 3, '#');
+				G.SetBoard(y + 2, x + 1, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				G.SetBoard(y + 1, x + 3, ' ');
+				y++;
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool MoveLeft(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y][x] == ' '&&G.GetBoard()[y + 1][x] == ' '&&G.GetBoard()[y + 2][x] == ' ') {
+				G.SetBoard(y, x, '#');
+				G.SetBoard(y + 1, x, '#');
+				G.SetBoard(y + 2, x, '#');
+				G.SetBoard(y, x + 1, ' ');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				x--;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 1) {
+			if (G.GetBoard()[y + 1][x] == ' '&&G.GetBoard()[y + 2][x] == ' ') {
+				G.SetBoard(y + 1, x, '#');
+				G.SetBoard(y + 2, x, '#');
+				G.SetBoard(y + 1, x + 3, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				x--;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 2) {
+			if (G.GetBoard()[y + 1][x] == ' '&&G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 3][x + 1] == ' ') {
+				G.SetBoard(y + 1, x, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 3, x + 1, '#');
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				G.SetBoard(y + 3, x + 2, ' ');
+				x--;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 3) {
+			if (G.GetBoard()[y + 2][x] == ' '&&G.GetBoard()[y + 1][x + 2] == ' ') {
+				G.SetBoard(y + 2, x, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 1, x + 3, ' ');
+				G.SetBoard(y + 2, x + 3, ' ');
+				x--;
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool MoveRight(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y][x + 2] == ' '&&G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 2][x + 3] == ' ') {
+				G.SetBoard(y, x + 2, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				G.SetBoard(y, x + 1, ' ');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				x++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 1) {
+			if (G.GetBoard()[y + 1][x + 4] == ' '&&G.GetBoard()[y + 2][x + 2] == ' ') {
+				G.SetBoard(y + 1, x + 4, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				x++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 2) {
+			if (G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 2][x + 3] == ' '&&G.GetBoard()[y + 3][x + 3] == ' ') {
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				G.SetBoard(y + 3, x + 3, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				G.SetBoard(y + 3, x + 2, ' ');
+				x++;
+				return true;
+			}
+			return false;
+		}
+		else if (shape == 3) {
+			if (G.GetBoard()[y + 1][x + 4] == ' '&&G.GetBoard()[y + 2][x + 4] == ' ') {
+				G.SetBoard(y + 1, x + 4, '#');
+				G.SetBoard(y + 2, x + 4, '#');
+				G.SetBoard(y + 1, x + 3, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				x++;
+				return true;
+			}
+			return false;
+		}
+	}
+
+};
+
+/* Z形方块，有两种形式
+	1. * * * *   2. * * * * 
+	   * # # *		* * # *	
+	   * * # #		* # # *	
+	   * * * *		* # * *		
+
+*/
+
+class Zpoly : public Block {
+private:
+	int shape;
+public:
+	Zpoly() {};
+
+	bool Init(GameBoard& G, int& y, int& x) {
+		srand((unsigned)time(0));
+		shape = rand() % 2;
+		x = MIDDLE;
+		y = 0;
+		if (shape == 0) {
+			if (G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 2][x + 3] == ' ') {
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 3][x + 1] == ' ') {
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 3, x + 1, '#');
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool Rotate(GameBoard& G, int y, int x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 3][x + 1] == ' ') {
+				shape = 1;
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 3, x + 1, '#');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 3, ' ');
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 2][x + 3] == ' ') {
+				shape = 0;
+				G.SetBoard(y + 2, x + 1, ' ');
+				G.SetBoard(y + 3, x + 1, ' ');
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				return true;
+			}
+			return false;
+		}
+	}
+	bool Fall(GameBoard& G, int& y, int& x) { 
+		if (shape == 0) {
+			if (G.GetBoard()[y+2][x+1] == ' '&&G.GetBoard()[y+3][x+2] == ' '&&G.GetBoard()[y+3][x+3] == ' ') {
+				G.SetBoard(y+1,x+1,' ');
+				G.SetBoard(y+1,x+2,' ');
+				G.SetBoard(y+2,x+3,' ');
+				G.SetBoard(y+2,x+1,'#');
+				G.SetBoard(y+3,x+2,'#');
+				G.SetBoard(y+3,x+3,'#');
+				y++;
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 4][x + 1] == ' '&&G.GetBoard()[y + 3][x + 2] == ' ') {
+				G.SetBoard(y + 2, x + 1, ' ');
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 4, x + 1, '#');
+				G.SetBoard(y + 3, x + 2, '#');
+				y++;
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool MoveLeft(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 1][x] == ' '&&G.GetBoard()[y + 2][x + 1] == ' ') {
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 2, x + 3, ' ');
+				G.SetBoard(y + 1, x, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				x--;
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 2][x ] == ' '&&G.GetBoard()[y + 3][x ] == ' ') {
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				G.SetBoard(y + 3, x + 1, ' ');
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 2, x , '#');
+				G.SetBoard(y + 3, x , '#');
+				x--;
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool MoveRight(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 1][x+3] == ' '&&G.GetBoard()[y + 2][x + 4] == ' ') {
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				G.SetBoard(y + 1, x+3, '#');
+				G.SetBoard(y + 2, x + 4, '#');
+				x++;
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 2][x+3] == ' '&&G.GetBoard()[y + 3][x+2] == ' ') {
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				G.SetBoard(y + 3, x + 1, ' ');
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 2, x+3, '#');
+				G.SetBoard(y + 3, x+2, '#');
+				x++;
+				return true;
+			}
+			return false;
+		}
+	}
+};
+
+/* S形方块，有两种形式
+	1. * * * *   2. * * * *
+	   * # # *		* # * *
+	   # # * *		* # # *
+	   * * * *		* * # *
+
+*/
+
+class Spoly : public Block {
+private:
+	int shape;
+public:
+	Spoly() {};
+
+	bool Init(GameBoard& G, int& y, int& x) {
+		srand((unsigned)time(0));
+		shape = rand() % 2;
+		x = MIDDLE;
+		y = 0;
+		if (shape == 0) {
+			if (G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 2][x] == ' '&&G.GetBoard()[y + 2][x + 1] == ' ') {
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 2, x , '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 1][x + 1] == ' '&&G.GetBoard()[y + 2][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 3][x + 2] == ' ') {
+				G.SetBoard(y + 1, x + 1, '#');
+				G.SetBoard(y + 2, x + 1, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 3, x + 2, '#');
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool Rotate(GameBoard& G, int y, int x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 2][x + 2] == ' '&&G.GetBoard()[y + 3][x + 2] == ' ') {
+				shape = 1;
+				G.SetBoard(y + 2, x + 2, '#');
+				G.SetBoard(y + 3, x + 2, '#');
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 2, x, ' ');
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 2][x] == ' ') {
+				shape = 0;
+				G.SetBoard(y + 2, x + 2, ' ');
+				G.SetBoard(y + 3, x + 2, ' ');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 2, x , '#');
+				return true;
+			}
+			return false;
+		}
+	}
+	bool Fall(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 3][x] == ' '&&G.GetBoard()[y + 3][x + 1] == ' '&&G.GetBoard()[y + 2][x + 2] == ' ') {
+				G.SetBoard(y + 2, x, ' ');
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 3, x , '#');
+				G.SetBoard(y + 3, x + 1, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				y++;
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 3][x + 1] == ' '&&G.GetBoard()[y + 4][x + 2] == ' ') {
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				G.SetBoard(y + 3, x + 1, '#');
+				G.SetBoard(y + 4, x + 2, '#');
+				y++;
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool MoveLeft(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 1][x] == ' '&&G.GetBoard()[y + 2][x - 1] == ' ') {
+				G.SetBoard(y + 1, x + 2, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				G.SetBoard(y + 1, x, '#');
+				G.SetBoard(y + 2, x - 1, '#');
+				x--;
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 1][x] == ' '&&G.GetBoard()[y + 2][x] == ' '&&G.GetBoard()[y + 3][x+1] == ' ') {
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 2, ' ');
+				G.SetBoard(y + 3, x + 2, ' ');
+				G.SetBoard(y + 1, x, '#');
+				G.SetBoard(y + 2, x, '#');
+				G.SetBoard(y + 3, x+1, '#');
+				x--;
+				return true;
+			}
+			return false;
+		}
+	}
+
+	bool MoveRight(GameBoard& G, int& y, int& x) {
+		if (shape == 0) {
+			if (G.GetBoard()[y + 1][x + 3] == ' '&&G.GetBoard()[y + 2][x + 2] == ' ') {
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x, ' ');
+				G.SetBoard(y + 1, x + 3, '#');
+				G.SetBoard(y + 2, x + 2, '#');
+				x++;
+				return true;
+			}
+			return false;
+		}
+		else {
+			if (G.GetBoard()[y + 1][x + 2] == ' '&&G.GetBoard()[y + 2][x + 3] == ' '&&G.GetBoard()[y + 3][x + 3] == ' ') {
+				G.SetBoard(y + 1, x + 1, ' ');
+				G.SetBoard(y + 2, x + 1, ' ');
+				G.SetBoard(y + 3, x + 2, ' ');
+				G.SetBoard(y + 1, x + 2, '#');
+				G.SetBoard(y + 2, x + 3, '#');
+				G.SetBoard(y + 3, x + 3, '#');
+				x++;
+				return true;
+			}
+			return false;
+		}
+	}
+};
+
+
 
 int main() {
+	system("mode con cols=173 lines=50");
 	GameBoard G(INIT_WIDTH, INIT_HEIGHT);
 	G.InitBorder();
 	G.Show();
-	//char S[4][4];
 	Block *A = new Block();
 	int currentBlock;
-	int x = 4, y = 0;
+	int x = MIDDLE, y = 0;
 	while (true) {
 		srand((unsigned)time(0));
-		currentBlock = rand() % 3;
+		currentBlock = rand() % 7;
 		switch (currentBlock) {
 		case 0: A = new Square();
 			break;
 		case 1: A = new Straight();
 			break;
 		case 2: A = new Tpoly();
+			break;
+		case 3: A = new LeftL();
+			break;
+		case 4: A = new RightL();
+			break;
+		case 5: A = new Zpoly();
+			break;
+		case 6:A = new Spoly();
 			break;
 		default:break;
 		}
@@ -631,18 +1473,18 @@ int main() {
 
 			G.Show(y, x);
 			srand((unsigned)time(0));
-			int a = rand() % 4;
-			if (a == 1)
+			int a = rand() % 10;
+			if (a < 2)
 				A->MoveLeft(G, y, x);
-			else if (a == 2)
+			else if (a < 5)
 				A->MoveRight(G, y, x);
-			else if (a == 3)
+			else if (a < 9)
 				A->Rotate(G, y, x);
 			else {
 				A->Fall(G, y, x);
 			}
 			G.Show(y, x);
-			Sleep(200);
+			Sleep(100);
 		}
 		G.Eliminate(y, x);
 		delete(A);
